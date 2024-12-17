@@ -1,0 +1,5 @@
+{
+  "rpcPort": 8332,
+  "rpcUsername": "username",
+  "rpcPassword": "password"
+}
