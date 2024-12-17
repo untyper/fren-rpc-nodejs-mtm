@@ -12,20 +12,24 @@ import tls from 'tls';
 import { readFile } from 'fs/promises';
 import { URL } from 'url';
 
-// This servers port
-const PORT = 443; // HTTPS
+const config = JSON.parse(await readFile(new URL('./config.json', import.meta.url), 'utf8'));
 
-async function loadConfig() {
-  return JSON.parse(await readFile(new URL('./config.json', import.meta.url), 'utf8'));
-}
+const rpcUrl = `http://127.0.0.1:${config.rpcPort}`;
+const rpcAuth = {
+  username: config.rpcUsername,
+  password: config.rpcPassword,
+};
+
+const PORT = 443; // This server's port, HTTPS
+const app = express();
 
 // Function to load SSL certificates
 async function loadCertificates() {
   let key, cert;
 
   try {
-    key = await readFile('/etc/letsencrypt/live/yourdomain.com/privkey.pem');
-    cert = await readFile('/etc/letsencrypt/live/yourdomain.com/fullchain.pem');
+    key = await readFile(`/etc/letsencrypt/live/${config.domain}/privkey.pem`);
+    cert = await readFile(`/etc/letsencrypt/live/${config.domain}/fullchain.pem`);
   } catch (err) {
     console.error(`Something went wrong trying to load Let's Encrypt SSL certificates.`, err);
     return;
@@ -33,15 +37,6 @@ async function loadCertificates() {
 
   return { key, cert };
 }
-
-const config = await loadConfig();
-
-const app = express();
-const rpcUrl = `http://127.0.0.1:${config.rpcPort}`;
-const rpcAuth = {
-  username: config.rpcUsername,
-  password: config.rpcPassword,
-};
 
 // Load certificates and create a secure context
 let sslOptions = await loadCertificates();
